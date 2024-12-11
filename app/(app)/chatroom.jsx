@@ -59,18 +59,48 @@ export default function ChatRoom() {
             let roomId = getRoomId(user?.uid, item?.userId)
             const docRef = doc(db, 'rooms', roomId)
             const messageRef = collection(docRef, "messages")
+
+            
+            const userMessage = { role: 'user', content: message }
+            const newMessages = [...messages, userMessage]
+
+            const botMessage = { role: 'assistant', content: 'Loading...' }
+            setMessages([...newMessages, botMessage])
+
+            await addDoc(messageRef, {
+                ...userMessage,
+                userId: user?.uid,
+                createdAt: Timestamp.fromDate(new Date())
+            })
+            
+            // const response = await axios.post(
+            //     'https://api.openai.com/v1/chat/completions',
+            //     {
+            //       model: 'gpt-4o-mini',
+            //       messages: newMessages,
+            //       max_tokens: 100,
+            //       temperature: 0.7,
+            //     },
+            //     {
+            //       headers: {
+            //         'Content-Type': 'application/json',
+            //         Authorization: `Bearer ${OPENAI_API_KEY}`,
+            //       },
+            //     }
+            //   )
+            // botMessage = response.data.choices[0].message;
+            // setMessages([...newMessages, botMessage])
+
             textRef.current = ""
             if (inputRef) {
                 inputRef?.current?.clear()
             }
-            const newDoc = await addDoc(messageRef, {
-                userId: user?.uid,
-                text: message,
-                senderName: user?.username,
+
+            await addDoc(messageRef, {
+                ...botMessage,
+                userId: item?.userId,
                 createdAt: Timestamp.fromDate(new Date())
             })
-
-            // console.log("new message id: ", newDoc.id)
         } catch (err) {
             Alert.alert('Message', err.message)
         }
@@ -111,7 +141,7 @@ export default function ChatRoom() {
                                     style={{ fontSize: hp(2) }}
                                 />
                                 <TouchableOpacity onPress={handleSendMessage} className='bg-neutral-200 p-2 mr-[1px] rounded-full'>
-                                    <Feather name='send' size={hp(2.7)} color={'#737373'} />
+                                    <Feather name='send' size={hp(2.7)} color={'white'} />
                                 </TouchableOpacity>
                             </View>
                         </View>

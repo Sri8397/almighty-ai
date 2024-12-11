@@ -61,14 +61,14 @@ export default function HomeHeader() {
                             text="Profile"
                             action={handleProfile}
                             value={null}
-                            icon={<Feather name='user' size={hp(2.5)} color='#737373' />}
+                            icon={<Feather name='user' size={hp(2.5)} color='white' />}
                         />
                         <Divider />
                         <MenuItem 
                             text="Sign out"
                             action={handleLogout}
                             value={null}
-                            icon={<AntDesign name='logout' size={hp(2.5)} color='#737373' />}
+                            icon={<AntDesign name='logout' size={hp(2.5)} color='white' />}
                         />
                     </MenuOptions>
                 </Menu>

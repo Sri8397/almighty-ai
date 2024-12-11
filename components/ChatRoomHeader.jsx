@@ -13,7 +13,7 @@ export default function ChatRoomHeader({ user, router }) {
                 headerLeft: () => (
                     <View className='flex-row items-center gap-4'>
                         <TouchableOpacity onPress={() => router.back()}>
-                            <Entypo name='chevron-left' size={hp(4)} color="#737373" />
+                            <Entypo name='chevron-left' size={hp(4)} color="white" />
                         </TouchableOpacity>
                         <View className='flex-row items-center gap-3'>
                             <Image
@@ -21,7 +21,7 @@ export default function ChatRoomHeader({ user, router }) {
                                 style={{ height: hp(4.5), aspectRatio: 1, borderRadius: 100 }}
                             />
                             {/* for name */}
-                            <Text style={{ height: (hp(2.5)) }} className='text-neutral-700 font-medium'>
+                            <Text style={{ height: (hp(2.5)) }} className='text-white font-medium'>
                                 {user?.username}
                             </Text>
                         </View>
@@ -29,8 +29,8 @@ export default function ChatRoomHeader({ user, router }) {
                 ),
                 headerRight: () => (
                     <TouchableOpacity className='flex-row items-center gap-8 '>
-                        <Ionicons name='call' size={hp(2.8)} color={'#737373'} />
-                        {/* <Ionicons name='videocam' size={hp(2.8)} color={'#737373'} /> */}
+                        <Ionicons name='call' size={hp(2.8)} color={'white'} />
+                        {/* <Ionicons name='videocam' size={hp(2.8)} color={'white'} /> */}
                     </TouchableOpacity>
                 ),
                 headerStyle: { backgroundColor: '#f87171' },

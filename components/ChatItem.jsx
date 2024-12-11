@@ -38,8 +38,8 @@ export default function ChatItem({item, noBorder, router, currentUser}) {
     if (typeof lastMessage === undefined) return "Loading..."
     if (lastMessage) {
       if (currentUser?.uid === lastMessage?.userId) 
-        return "You: " + lastMessage?.text
-      return lastMessage?.text
+        return "You: " + lastMessage?.content
+      return lastMessage?.content
     } else 
       return "Say Hi 👋🏻"
   }
@@ -58,7 +58,7 @@ export default function ChatItem({item, noBorder, router, currentUser}) {
           <Text style={{fontSize: hp(1.8)}} className='font-semibold text-neutral-800'>{item.username}</Text>
           <Text style={{fontSize: hp(1.8)}} className='font-medium text-neutral-500'>{renderTime()}</Text>
         </View>
-        <Text style={{fontSize: hp(1.6)}} className='font-medium text-neutral-500'>{renderLastMessage()}</Text>
+        <Text style={{fontSize: hp(1.6)}} className='font-medium text-neutral-500 line-clamp-2'>{renderLastMessage()}</Text>
       </View>
     </TouchableOpacity>
   )

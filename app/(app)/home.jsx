@@ -10,12 +10,15 @@ import { userRef } from '../../firebase.config'
 
 export default function Home() {
   const {user} = useAuth()
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState([{
+    userId: 'santa_claus',
+    username: 'Santa Claus'
+  }])
   // console.log('got user: ', user)
 
   useEffect(() => {
-    if(user?.uid)
-      getUsers()
+    // if(user?.uid)
+    //   getUsers()
   },[])
   
   const getUsers = async () => {

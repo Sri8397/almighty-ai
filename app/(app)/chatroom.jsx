@@ -6,11 +6,12 @@ import ChatRoomHeader from '../../components/ChatRoomHeader'
 import MessageList from '../../components/MessageList'
 import { heightPercentageToDP as hp, widthPercentageToDP } from 'react-native-responsive-screen'
 import { Feather } from '@expo/vector-icons'
-import CustomKeyboardView from '../../components/CustomKeyboardView'
 import { getRoomId } from '../../utils/common'
 import { useAuth } from '../../context/authContext'
 import { addDoc, collection, doc, onSnapshot, orderBy, query, setDoc, Timestamp } from 'firebase/firestore'
 import { db } from '../../firebase.config'
+import Animated, { useSharedValue, withSpring } from 'react-native-reanimated'
+import axios from 'axios'
 
 export default function ChatRoom() {
     const item = useLocalSearchParams()
@@ -20,6 +21,8 @@ export default function ChatRoom() {
     const textRef = useRef('')
     const inputRef = useRef(null)
     const scrollViewRef = useRef(null)
+    // const [marginBottom, setMarginBottom] = useState(0)
+    const marginBottom = useSharedValue(0)
 
     useEffect(() => {
         createRoomIfNotExists()
@@ -35,12 +38,22 @@ export default function ChatRoom() {
         })
 
         const keyboardDidShowListener = Keyboard.addListener(
-            'keyboardDidShow', updateScrollView
+            'keyboardDidShow', (e) => {
+                // setMarginBottom(e.endCoordinates.height)
+                marginBottom.value = withSpring(e.endCoordinates.height)
+                updateScrollView()
+            }
         )
+
+        const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+            // setMarginBottom(0)
+            marginBottom.value = withSpring(0)
+        })
 
         return () => {
             unsub()
             keyboardDidShowListener.remove()
+            hideSubscription.remove()
         }
     }, [])
 
@@ -60,11 +73,12 @@ export default function ChatRoom() {
             const docRef = doc(db, 'rooms', roomId)
             const messageRef = collection(docRef, "messages")
 
-            
-            const userMessage = { role: 'user', content: message }
-            const newMessages = [...messages, userMessage]
+            const OPENAI_API_KEY = "your_key"
 
-            const botMessage = { role: 'assistant', content: 'Loading...' }
+            const userMessage = { role: 'user', content: message }
+            const newMessages = [ userMessage]
+
+            let botMessage = { role: 'assistant', content: 'Loading...' }
             setMessages([...newMessages, botMessage])
 
             await addDoc(messageRef, {
@@ -72,29 +86,29 @@ export default function ChatRoom() {
                 userId: user?.uid,
                 createdAt: Timestamp.fromDate(new Date())
             })
-            
-            // const response = await axios.post(
-            //     'https://api.openai.com/v1/chat/completions',
-            //     {
-            //       model: 'gpt-4o-mini',
-            //       messages: newMessages,
-            //       max_tokens: 100,
-            //       temperature: 0.7,
-            //     },
-            //     {
-            //       headers: {
-            //         'Content-Type': 'application/json',
-            //         Authorization: `Bearer ${OPENAI_API_KEY}`,
-            //       },
-            //     }
-            //   )
-            // botMessage = response.data.choices[0].message;
-            // setMessages([...newMessages, botMessage])
 
             textRef.current = ""
             if (inputRef) {
                 inputRef?.current?.clear()
             }
+
+            const response = await axios.post(
+                'https://api.openai.com/v1/chat/completions',
+                {
+                    model: 'gpt-4o-mini',
+                    messages: newMessages,
+                    max_tokens: 100,
+                    temperature: 0.7,
+                },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${OPENAI_API_KEY}`,
+                    },
+                }
+            )
+            botMessage = response.data.choices[0].message;
+            setMessages([...newMessages, botMessage])
 
             await addDoc(messageRef, {
                 ...botMessage,
@@ -117,38 +131,38 @@ export default function ChatRoom() {
     }, [messages])
 
     return (
-        <CustomKeyboardView inChat={true}>
-            <View className="flex-1">
-                <StatusBar style='dark' />
-                <ChatRoomHeader user={item} router={router} />
-                <View className='bg-red-400 h-3' />
-                <ImageBackground
-                    className='flex-1 justify-center'
-                    resizeMode="cover"
-                    source={require('../../assets/images/image.png')}
-                >
-                    <View className='flex-1 justify-between overflow-visible'>
-                        <View className='flex-1'>
-                            <MessageList scrollViewRef={scrollViewRef} messages={messages} currentUser={user} />
-                        </View>
-                        <View style={{ marginBottom: hp(2.7) }} className='pt-2'>
-                            <View className='flex-row mx-3 justify-between bg-white border p-2 border-neutral-300 rounded-full pl-5'>
-                                <TextInput
-                                    ref={inputRef}
-                                    onChangeText={value => textRef.current = value}
-                                    placeholder='Type message...'
-                                    className='flex-1 mr-2'
-                                    style={{ fontSize: hp(2) }}
-                                />
-                                <TouchableOpacity onPress={handleSendMessage} className='bg-neutral-200 p-2 mr-[1px] rounded-full'>
-                                    <Feather name='send' size={hp(2.7)} color={'white'} />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
+        <View className="flex-1">
+            <StatusBar style='dark' />
+            <ChatRoomHeader user={item} router={router} />
+            <ImageBackground
+                className='flex-1 justify-center'
+                resizeMode="cover"
+                source={require('../../assets/images/image.png')}
+            >
+                <View className='flex-1 justify-between overflow-visible'>
+                    <View className='flex-1'>
+                        <MessageList scrollViewRef={scrollViewRef} messages={messages} currentUser={user} />
                     </View>
-                </ImageBackground>
-
-            </View>
-        </CustomKeyboardView>
+                    <View style={{ marginBottom: hp(1.7) }} className='pt-2'>
+                        <Animated.View
+                            style={{ marginBottom }}
+                            className='flex-row mx-3 bg-white justify-between border p-2 border-neutral-300 rounded-2xl pl-5'
+                        >
+                            <TextInput
+                                ref={inputRef}
+                                onChangeText={value => textRef.current = value}
+                                placeholder="Type message..."
+                                multiline
+                                className='bg-red-100 bottom-0 flex-1 mr-2 rounded-2xl p-2'
+                                style={{ fontSize: hp(2), maxHeight: hp(14) }}
+                            />
+                            <TouchableOpacity onPress={handleSendMessage} style={{ height: hp(4.8) }} className='bg-red-500 p-2 mr-[1px] mt-auto rounded-full'>
+                                <Feather name='send' size={hp(2.7)} color={'white'} />
+                            </TouchableOpacity>
+                        </Animated.View>
+                    </View>
+                </View>
+            </ImageBackground>
+        </View>
     )
 }
